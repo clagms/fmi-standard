@@ -705,7 +705,7 @@ This function may only be called in <<EventMode>> if `providesEvaluateDiscreteSt
 It evaluates latexmath:[\mathbf{f}_{\mathit{disc}}], computing the current discrete states.
 
 When this capability flag is `true`, the importer controls when latexmath:[\mathbf{f}_{\mathit{disc}}] is evaluated by calling <<fmi3EvaluateDiscreteStates>>.
-Get functions do not implicitly evaluate latexmath:[\mathbf{f}_{\mathit{disc}}].
+`fmi3GetXXX` calls do not implicitly evaluate latexmath:[\mathbf{f}_{\mathit{disc}}].
 Instead, they retrieve the current discrete states or evaluate latexmath:[\mathbf{f}_{\mathit{event}}] using these states.
 
 To obtain values based on the evaluation of latexmath:[\mathbf{f}_{\mathit{disc}}] for the current super-dense time instant and its current arguments, the importer must call <<fmi3EvaluateDiscreteStates>> before querying the discrete states or variables that depend on them.
