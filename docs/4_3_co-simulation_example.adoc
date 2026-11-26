@@ -137,7 +137,7 @@ In the following example, the usage of the fmi3XXX functions is sketched for a c
                 // activate input clocks and apply the inputs with active clocks
                 CALL(applyInputClocks(S, time, timeInstant));
                 CALL(applyClockedInputs(S, time, timeInstant));
-                
+
                 // Before the new super-dense time instant: record clocks and
                 // the clocked variables with active clocks
                 CALL(recordClocks(S, time, timeInstant+1, outputFile));
