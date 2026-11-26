@@ -18,7 +18,7 @@ The FMU itself does not implement any services to support this.
  ** <<preemption-support,`fmi3LockPreemptionCallback`>>
  ** <<preemption-support,`fmi3UnlockPreemptionCallback`>>
 
-* The following callback functions lead to well-defined states and may call FMI functions according to their respective state definitions:
+* The following callback functions lead to well-defined modes and may call FMI functions according to their respective mode definitions:
  ** <<intermediateUpdate,`fmi3IntermediateUpdateCallback`>>
  ** <<fmi3ClockUpdateCallback>>
 
@@ -188,7 +188,7 @@ Using this pointer, data may be transferred between the importer and callback fu
 include::../headers/fmi3PlatformTypes.h[tags=FMUState]
 ----
 
-This is a pointer to a data structure in the FMU that stores the internal FMU state of the current or a previously stored time instant.
+This is a pointer to a data structure in the FMU that stores the FMU state of the current or a previously stored time instant.
 This allows to restart a simulation from a previously stored FMU state (see <<get-set-fmu-state>>).
 
 [source, C]
@@ -260,7 +260,7 @@ For production environments warnings should be treated like errors unless they c
 
 [[fmi3Discard,`fmi3Discard`]]
 `fmi3Discard`::
-The call was not successful and the FMU is in the same state as before the call.
+The call was not successful and the FMU is in the same mode as before the call.
 The output argument values are undefined, but the computation may continue.
 Function <<logMessage>> should be called by the FMU with further information before returning this status, respecting the current logging settings.
 Advanced importers may try alternative approaches to continue the simulation by calling the function with different arguments or calling another function - except in FMI for Scheduled Execution where repeating failed function calls is not allowed.
@@ -281,7 +281,7 @@ The output argument values are undefined and the simulation must not be continue
 Function <<logMessage>> must be called by the FMU with further information before returning this status, respecting the current logging settings,
 and it should be called regardless of the current logging settings, unless the `logMessage` callback function pointer was provided as a `NULL` pointer.
 If a function returns <<fmi3Error>>, it is possible to restore a previously retrieved FMU state by calling <<fmi3SetFMUState>> or to reset the instance by calling <<fmi3Reset>>.
-When detecting illegal arguments or a function call not allowed in the current state according to the respective state machine, the FMU must return <<fmi3Error>>.
+When detecting illegal arguments or a function call not allowed in the current mode according to the respective state machine, the FMU must return <<fmi3Error>>.
 Other instances of this FMU are not affected by the error.
 +
 NOTE: For example, when setting a constant with a call to <<get-and-set-variable-values,`fmi3Set{VariableType}`>>, then the function must return with an error (<<fmi3Error,`fmi3Status = fmi3Error`>>).
@@ -412,8 +412,8 @@ If an API function takes multiple value references, the serialized variables are
 
 ===== Getting and Setting Variable Values [[get-and-set-variable-values]]
 
-Restrictions for setting and getting of variables with certain types, causalities and variabilities are defined in the state machine and state descriptions (see <<common-state-machine>> for common states, <<state-machine-model-exchange>> for Model Exchange, <<state-machine-co-simulation>> for Co-Simulation, and <<state-machine-scheduled-execution>> for Scheduled Execution).
-In addition to those state-specific restrictions, setting and getting of <<clocked-variable,clocked variables>> is only allowed during <<EventMode>> when their respective Clocks are active, and during <<InitializationMode>> irrespective of Clock activation status.
+Restrictions for setting and getting of variables with certain types, causalities and variabilities are defined in the state machine and mode descriptions (see <<common-state-machine>> for common modes, <<state-machine-model-exchange>> for Model Exchange, <<state-machine-co-simulation>> for Co-Simulation, and <<state-machine-scheduled-execution>> for Scheduled Execution).
+In addition to those mode-specific restrictions, setting and getting of <<clocked-variable,clocked variables>> is only allowed during <<EventMode>> when their respective Clocks are active, and during <<InitializationMode>> irrespective of Clock activation status.
 
 The variable <<ModelVariables,type>> defined in the <<modelDescription.xml>> determines the function <<get-and-set-variable-values,`fmi3Get/Set{VariableType}`>> (see also <<VariableType,`{VariableType}`>> and <<VariableTypeExclClock,`{VariableTypeExclClock}`>>) that must be used for accessing the respective variable values.
 To set or inquire variables of type <<figure-schema-Enumeration,`Enumeration`>>, `fmi3SetInt64` and `fmi3GetInt64` must be used. +
@@ -505,10 +505,10 @@ If an FMU defines min/max values for <<local>> and <<output>> variables of float
 
 ===== Getting and Setting the Complete FMU State [[get-set-fmu-state]]
 
-The FMU has internal data representing its state.
-This internal state consists especially of the values of the continuous states, iteration variables, <<parameter>> values, <<input>> values, delay buffers, file identifiers, and FMU internal status information.
+The FMU has internal data representing the FMU state.
+The FMU state consists especially of the values of the continuous states, iteration variables, <<parameter>> values, <<input>> values, delay buffers, file identifiers, and FMU internal status information.
 Depending on the FMI type, only a subset of this data is directly accessible via the FMI C-API.
-With the functions of this section, the entire internal FMU state can be stored and reapplied to continue the simulation from this state.
+With the functions of this section, the entire FMU state can be stored and reapplied to continue the simulation from this FMU state.
 
 [NOTE]
 ====
@@ -519,7 +519,7 @@ Examples for using this feature:
 * For nonlinear Kalman filters: get the FMU state just before initialization; in every sample period, set new continuous states from the Kalman filter algorithm based on measured values; integrate to the next sample instant and inquire the predicted continuous states that are used in the Kalman filter algorithm as basis to set new continuous states.
 
 * For nonlinear model predictive control: get the FMU state just before initialization; in every sample period, set new continuous states from an observer, initialize and get the FMU state after initialization.
-From this state, perform many simulations that are restarted after the initialization with new input variables proposed by the optimizer.
+From this FMU state, perform many simulations that are restarted after the initialization with new input variables proposed by the optimizer.
 ====
 
 Furthermore, the FMU state can be serialized and copied in a byte vector.
@@ -538,7 +538,7 @@ Function `fmi3GetFMUState`::
 include::../headers/fmi3FunctionTypes.h[tags=GetFMUState]
 ----
 +
-[[FMUState,`FMUState`]]This function copies the internal FMU state and returns a pointer to this copy in <<FMUState>>.
+[[FMUState,`FMUState`]]This function copies the FMU state and returns a pointer to this copy in <<FMUState>>.
 <<FMUState>> must contain all information required to allow continuing the simulation from the current FMU state without additional FMI C-API calls.
 If on entry `*FMUState = NULL`, a new allocation is required.
 If `*FMUState != NULL`, then `*FMUState` points to a previously returned <<FMUState>> that is no longer needed and can be overwritten.
@@ -557,7 +557,7 @@ Function `fmi3SetFMUState`::
 include::../headers/fmi3FunctionTypes.h[tags=SetFMUState]
 ----
 +
-This function restores the state provided by <<FMUState>>.
+This function restores the FMU state provided by <<FMUState>>.
 The FMU must not change the content of the provided <<FMUState>> to allow multiple calls of <<fmi3SetFMUState>> with this <<FMUState>>.
 
 [[fmi3FreeFMUState, `fmi3FreeFMUState`]]
@@ -606,11 +606,11 @@ include::../headers/fmi3FunctionTypes.h[tags=DeserializeFMUState]
 This function deserializes the byte vector `serializedState` of length `size`, constructs a copy of the FMU state and returns <<FMUState>>, the pointer to this copy.
 
 These serialization and deserialization functions may be called, only if the capability flags <<canGetAndSetFMUState>> and <<canSerializeFMUState>> are set to `true`.
-Any serialized state must be deserializable into a valid state for the same FMU and the same execution platform.
+Any serialized FMU state must be deserializable into a valid FMU state for the same FMU and the same execution platform.
 
 [NOTE]
 ====
-Whether the state can also be deserialized on another platform of the same FMU, or even across different versions of the same FMU is implementation dependent, so that in general an importer or a user cannot expect this to work, or to even be detected as an error.
+Whether the FMU state can also be deserialized on another platform of the same FMU, or even across different versions of the same FMU is implementation dependent, so that in general an importer or a user cannot expect this to work, or to even be detected as an error.
 FMUs can of course document their serialization format, and make broader guarantees, but that is beyond the scope of this standard.
 ====
 
@@ -948,7 +948,7 @@ If this call is omitted in a super-dense time instant, latexmath:[\mathbf{f}_{\m
 
 [NOTE]
 ====
-Separating latexmath:[\mathbf{f}_{\mathit{disc}}] from latexmath:[\mathbf{f}_{\mathit{event}}] gives the importer independent control over state-transition and output evaluation.
+Separating latexmath:[\mathbf{f}_{\mathit{disc}}] from latexmath:[\mathbf{f}_{\mathit{event}}] allows manipulation of the current <<discrete-state,discrete states>> and compute the corresponding outputs, for instance for model-based control applications.
 ====
 
 The discrete-time variables latexmath:[\mathbf{x}_k] and latexmath:[\mathbf{y}_k] are called clocked variables.
@@ -1174,7 +1174,7 @@ Discussion of the combinations that are not allowed:
 For all other Clocks an interval must be known or be retrievable by the importer at any time.
 
 ^|(d)
-|The combination fixed Clock and <<fmi3IntervalChanged>> is not valid in states other than <<InitializationMode>>, since intervals of fixed Clocks cannot change in super state <<Initialized>>.
+|The combination fixed Clock and <<fmi3IntervalChanged>> is not valid in modes other than <<InitializationMode>>, since intervals of fixed Clocks cannot change in super mode <<Initialized>>.
 
 |====
 
@@ -1191,7 +1191,7 @@ Discussion of the combinations that are allowed:
 |In <<InitializationMode>>, <<fmi3IntervalChanged>> signals that a new interval is provided that has not been known by the importer in advance, or that the interval of a previous call of <<fmi3GetInterval>> is overwritten.
 
 ^|(2)
-|For constant Clocks and for fixed Clocks in super state <<Initialized>>, <<fmi3IntervalUnchanged>> is the only qualifier that can be returned, since the interval is already known by the importer and cannot be changed by the FMU nor by the importer.
+|For constant Clocks and for fixed Clocks in super mode <<Initialized>>, <<fmi3IntervalUnchanged>> is the only qualifier that can be returned, since the interval is already known by the importer and cannot be changed by the FMU nor by the importer.
 
 ^|(3)
 |For fixed/tunable Clocks with <<intervalDecimal,`intervalDecimal`>> not specified and for aperiodic Clocks, <<fmi3IntervalUnchanged>> is returned when a previous call of <<fmi3GetInterval>> already returned an interval, which is still valid.
@@ -1208,7 +1208,7 @@ In this case, the new interval until the next Clock activation is relative to th
 Subsequent Clock activations follow the general interval definition for periodic Clocks until the tunable interval changes again.
 
 ^|(7)
-|In super state <<Initialized>>, for a changing Clock, <<fmi3IntervalChanged>> is returned if and only if the Clock has just been activated.
+|In super mode <<Initialized>>, for a changing Clock, <<fmi3IntervalChanged>> is returned if and only if the Clock has just been activated.
 
 ^|(8)
 |In <<EventMode>> and <<ClockUpdateMode>>, for a countdown Clock, <<fmi3IntervalChanged>> is returned if the last interval given to the importer is no longer valid (i.e., the Clock needs to be re-scheduled), or if the interval was not yet known to the FMU.
@@ -1349,13 +1349,13 @@ The importer must observe the calling-order requirements described in <<fmi3Eval
 
 For example,
 
-* during the iteration of an integrator step, only the state derivatives need to be computed, provided the <<output>> of an FMU is not connected, or
+* during the iteration of an integrator step, only the continuous state derivatives need to be computed, provided the <<output>> of an FMU is not connected, or
 
 * when localizing <<state-event,state events>>, only the computation of event indicators may be required.
 
 Because specific set functions exist (<<get-and-set-variable-values,`fmi3Set{VariableType}`>>, <<fmi3SetTime>>, <<fmi3SetContinuousStates>>), caching algorithms can be applied to reuse already computed values.
 
-In all tables describing the mathematical model of a state (e.g. <<table-math-model-exchange,ContinuousTimeMode>>), for notational convenience one function (e.g. latexmath:[\mathbf{f}_{\mathit{cont}}]) is defined to compute all outputs from all input arguments.
+In all tables describing the mathematical model of a mode (e.g. <<table-math-model-exchange,ContinuousTimeMode>>), for notational convenience one function (e.g. latexmath:[\mathbf{f}_{\mathit{cont}}]) is defined to compute all outputs from all input arguments.
 However, in an efficiently implemented FMU, computation of each output may be triggered by its specific get function.
 Additionally, the outputs may be a function of a subset of the input arguments, as defined in the <<ModelStructure>>.
 
@@ -1435,9 +1435,9 @@ Partial derivatives can be used:
 To avoid expensive numeric approximations of these derivatives, FMI offers dedicated functions to retrieve partial derivatives for variables of an FMU.
 For Model Exchange, this means computing the partial derivatives at any time instant, whereas for Co-Simulation, this means computing the partial derivatives at a communication point.
 
-An FMU has different states and in every state an FMU might be described by different equations and different unknowns.
+An FMU has different modes and in every mode an FMU might be described by different equations and different unknowns.
 The precise definitions are given in the mathematical descriptions of Model Exchange (<<state-machine-model-exchange>>), Co-Simulation (<<state-machine-co-simulation>>), and Scheduled Execution (<<state-machine-scheduled-execution>>).
-In every state, the general form of the FMU equations is:
+In every mode, the general form of the FMU equations is:
 
 [latexmath]
 ++++
@@ -1446,11 +1446,11 @@ In every state, the general form of the FMU equations is:
 
 where
 
-* latexmath:[\mathbf{v}_{\mathit{unknown}}] is the vector of unknown variables computed in the current state:
+* latexmath:[\mathbf{v}_{\mathit{unknown}}] is the vector of unknown variables computed in the current mode:
 
 ** <<InitializationMode>>: The exposed unknowns listed as elements <<InitialUnknown>> in <<ModelStructure>> that have a floating point type.
 
-** <<ContinuousTimeMode>> (Model Exchange): The continuous-time outputs and state derivatives (= the variables listed as elements <<Output>> of <<ModelStructure>> with a floating point type and <<variability>> = <<continuous>> and the variables listed as elements <<ContinuousStateDerivative>> in <<ModelStructure>>).
+** <<ContinuousTimeMode>> (Model Exchange): The continuous-time outputs and continuous state derivatives (= the variables listed as elements <<Output>> of <<ModelStructure>> with a floating point type and <<variability>> = <<continuous>> and the variables listed as elements <<ContinuousStateDerivative>> in <<ModelStructure>>).
 
 ** <<EventMode>> (Model Exchange): The same variables as in the <<ContinuousTimeMode>> and additionally variables listed as elements <<Output>> of <<ModelStructure>> with a floating point type and <<variability>> = <<discrete>>.
 
@@ -1459,7 +1459,7 @@ Each continuous state derivative variable listed as elements <<ContinuousStateDe
 
 * latexmath:[\mathbf{v}_{\mathit{known}}] is the vector of arguments of function latexmath:[\mathbf{f}] that could appear in <<dependencies>> (see the description there) in <<ModelStructure>> of the unknown variables latexmath:[\mathbf{v}_{\mathit{unknown}}].
 
-* latexmath:[{\mathbf{v}_{\mathit{rest}}}] is the set of <<input>> variables and discrete-time states of function latexmath:[\mathbf{f}] which cannot be set by the importer in the current state, but in other states
+* latexmath:[{\mathbf{v}_{\mathit{rest}}}] is the set of <<input>> variables and <<discrete-state,discrete states>> of function latexmath:[\mathbf{f}] which cannot be set by the importer in the current mode, but in other modes
 +
 [NOTE]
 ====
@@ -1475,7 +1475,7 @@ This is intentional as their dependencies listed in <<ModelStructure>> are inten
 
 [NOTE]
 ====
-The variable relationships are different in different states.
+The variable relationships are different in different modes.
 For example, during <<ContinuousTimeMode>>, the partial derivate of a continuous-time output latexmath:[\mathbf{y}] with respect to discrete-time <<input,`inputs`>> is undefined, because discrete-time <<input,`inputs`>> cannot be set between events.
 ====
 
@@ -1521,15 +1521,15 @@ Both functions have the same arguments:
 * `nUnknowns` contains the length of argument `unknowns`.
 * `knowns` contains value references of the knowns.
 * `nKnowns` contains the length of argument `knowns`.
-* `seed` contains the <<serialization-of-variables,serialized>> components of the seed vector.
-* `nSeed` contains the length of `seed`.
-* `sensitivity` contains the <<serialization-of-variables,serialized>> components of the sensitivity vector.
-* `nSensitivity` contains the length of `sensitivity`.
+* `seeds` contains the <<serialization-of-variables,serialized>> components of the seed vector.
+* `nSeeds` contains the length of `seeds`.
+* `sensitivities` contains the <<serialization-of-variables,serialized>> components of the sensitivity vector.
+* `nSensitivities` contains the length of `sensitivities`.
 
 [NOTE]
 ====
-Note that array variables will be serialized, so `nSeed` is only equal to `nKnowns` in the case of directional derivatives (resp., equal to `nUnknowns` in the case of adjoint derivatives) if all value references of `knowns` (resp., `unknowns`) point to scalar variables.
-Likewise `nSensitivity` is only equal to `nUnknowns` (resp., `nKnowns`) if all value references of `unknowns` (resp., `knowns`) point to scalar variables.
+Note that array variables will be serialized, so `nSeeds` is only equal to `nKnowns` in the case of directional derivatives (resp., equal to `nUnknowns` in the case of adjoint derivatives) if all value references of `knowns` (resp., `unknowns`) point to scalar variables.
+Likewise `nSensitivities` is only equal to `nUnknowns` (resp., `nKnowns`) if all value references of `unknowns` (resp., `knowns`) point to scalar variables.
 ====
 
 ===== Directional Derivatives [[directionDerivatives]]
@@ -1542,7 +1542,7 @@ Note, function <<fmi3GetDirectionalDerivative>> can be utilized for the followin
 
 - Numerical integrators of stiff methods need matrix latexmath:[{\frac{\partial \mathbf{f}}{\partial \mathbf{x}}}].
 
-- If the FMU is connected with other FMUs, the partial derivatives of the state derivatives and outputs with respect to the continuous states and the <<input,`inputs`>> are needed in order to compute the Jacobian for the system of the connected FMUs.
+- If the FMU is connected with other FMUs, the partial derivatives of the continuous state derivatives and outputs with respect to the continuous states and the <<input,`inputs`>> are needed in order to compute the Jacobian for the system of the connected FMUs.
 
 - If the FMU shall be linearized, the same <<derivative,`derivatives`>> as in the previous item are needed.
 
