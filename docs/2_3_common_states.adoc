@@ -727,7 +727,7 @@ This function is called to signal a converged solution at the current super-dens
 <<fmi3UpdateDiscreteStates>> must be called at least once per super-dense time instant.
 This function deactivates the active Clocks and ends the current super-dense time instant.
 Consequently, clocked variables cannot be queried for that Clock activation after the call.
-If `providesEvaluateDiscreteStates` (<<providesEvaluateDiscreteStatesME,ME>>/<<providesEvaluateDiscreteStatesCS,CS>>) is `true`, an importer requiring clocked values based on the current state transition must call <<fmi3EvaluateDiscreteStates>> and query those values while their Clocks are active, before calling <<fmi3UpdateDiscreteStates>>.
+If `providesEvaluateDiscreteStates` (<<providesEvaluateDiscreteStatesME,ME>>/<<providesEvaluateDiscreteStatesCS,CS>>) is `true`, an importer requiring clocked variable values based on the current state transition must call <<fmi3EvaluateDiscreteStates>> and query those values while their Clocks are active, before calling <<fmi3UpdateDiscreteStates>>.
 +
 [[fmi3UpdateDiscreteStates,`fmi3UpdateDiscreteStates`]]
 [source, C]
