@@ -79,6 +79,10 @@ In the following example, the usage of the fmi3XXX functions is sketched for a c
         CALL(applyInputClocks(S, time, timeInstant));
         CALL(applyClockedInputs(S, time, timeInstant));
 
+        // record clocks and the clocked variables with active clocks
+        CALL(recordClocks(S, time, timeInstant+1, outputFile));
+        CALL(recordClockedVariables(S, time, timeInstant+1, outputFile));
+
         CALL(FMI3UpdateDiscreteStates(S,
             &discreteStatesNeedUpdate,
             &terminateSimulation,
@@ -90,10 +94,6 @@ In the following example, the usage of the fmi3XXX functions is sketched for a c
 
         // new super-dense time instant began
         timeInstant++;
-
-        // record clocks and the clocked variables with active clocks
-        CALL(recordClocks(S, time, timeInstant, outputFile));
-        CALL(recordClockedVariables(S, time, timeInstant, outputFile));
 
         if (terminateSimulation) {
             goto TERMINATE;
